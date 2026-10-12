@@ -1,7 +1,7 @@
 {
 	"id": "journey-import",
 	"name": "Journey Diary Import",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "1.13.4",
 	"description": "Convert Journey diary ZIP backups into dated Markdown notes with photos.",
 	"author": "Michael Lip",

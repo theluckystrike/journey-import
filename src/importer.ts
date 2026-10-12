@@ -49,6 +49,15 @@ export function safeName(value: string): string {
 	return name;
 }
 const join = (folder: string, name: string) => normalizePath(folder ? `${folder}/${name}` : name);
+/** Use the case of an existing parent folder. Case-insensitive file systems see one path. */
+function vaultCase(path: string, known: Map<string, string>): string {
+	const parts = path.split('/');
+	for (let i = parts.length - 1; i > 0; i--) {
+		const found = known.get(parts.slice(0, i).join('/').toLowerCase());
+		if (found) return [found, ...parts.slice(i)].join('/');
+	}
+	return path;
+}
 
 /** Intl supplies the historical offset for the IANA timezone in the entry. */
 export function entryDate(timestamp: number, timezone: string): { date: string; day: string; time: string } {
@@ -96,7 +105,12 @@ export function convertBody(text: string, type: string): string {
 	if (!new RegExp(TAG.source, 'i').test(text)) return convertBody(text, 'markdown');
 	const doc = new DOMParser().parseFromString(textHtml(text), 'text/html');
 	doc.querySelectorAll('script,style,iframe,object,embed,img,video,audio,source,link,meta').forEach((el) => el.remove());
-	return htmlToMarkdown(doc.body).trim().replace(/(^|[\s*])_([^\n]+?)_(?=$|[\s*.,!?])/g, '$1*$2*');
+	// htmlToMarkdown writes text such as &lt;img&gt; as a raw tag. Mark it outside code, then write it as &lt;.
+	const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		if (!node.parentElement?.closest('pre,code')) node.nodeValue = (node.nodeValue ?? '').replace(/\uE000/g, '').replace(/<(?=[a-z/!?])/gi, '\uE000');
+	}
+	return htmlToMarkdown(doc.body).replace(/\uE000/g, '&lt;').trim().replace(/(^|[\s*])_([^\n]+?)_(?=$|[\s*.,!?])/g, '$1*$2*');
 }
 
 export function parseEntry(value: unknown, source: string, warnings: string[]): JourneyEntry | null {
@@ -178,6 +192,14 @@ export function planImport(archive: Archive, options: ImportOptions, existing: s
 	const pattern = pro ? options.pattern : DEFAULT_OPTIONS.pattern;
 	if (pro && !merge && (!pattern.trim() || /\{(?!date\}|time\}|id\})[^}]*\}/.test(pattern))) throw new Error('Use {date}, {time} and {id} in the file name pattern.');
 	const taken = new Set(existing.map((p) => p.toLowerCase()));
+	const known = new Map(existing.map((p) => [p.toLowerCase(), p]));
+	// Index archive photos by basename once. A scan for each photo is slow for a large backup.
+	const byName = new Map<string, string[]>();
+	for (const p of Object.keys(archive.files)) {
+		if (!PHOTO.test(p)) continue;
+		const file = p.split('/').pop()!;
+		byName.set(file, [...(byName.get(file) ?? []), p]);
+	}
 	const warnings = [...archive.warnings];
 	const attachments: ImportPlan['attachments'] = [];
 	const resolvedPhotos = new Map<string, string>();
@@ -186,7 +208,7 @@ export function planImport(archive: Archive, options: ImportOptions, existing: s
 		const embeds: string[] = [];
 		for (const photo of entry.photos) {
 			const direct = archive.files[photo] ? photo : undefined;
-			const matches = Object.keys(archive.files).filter((p) => p.split('/').pop() === photo.split('/').pop() && PHOTO.test(p));
+			const matches = byName.get(photo.split('/').pop()!) ?? [];
 			const source = direct ?? (matches.length === 1 ? matches[0] : undefined);
 			if (!source || !PHOTO.test(source)) { warnings.push(`${entry.id}: missing or ambiguous photo ${photo}.`); continue; }
 			let path = resolvedPhotos.get(source);
@@ -194,7 +216,7 @@ export function planImport(archive: Archive, options: ImportOptions, existing: s
 				// Keep the extension when safeName shortens a long photo name.
 				const file = source.split('/').pop()!;
 				const ext = PHOTO.exec(file)![0];
-				path = freePath(join(attachmentsFolder, `${safeName(file.slice(0, -ext.length))}${ext}`), taken);
+				path = freePath(vaultCase(join(attachmentsFolder, `${safeName(file.slice(0, -ext.length))}${ext}`), known), taken);
 				resolvedPhotos.set(source, path);
 				attachments.push({ path, source });
 			}
@@ -204,8 +226,8 @@ export function planImport(archive: Archive, options: ImportOptions, existing: s
 		const content = `---\n${stringifyYaml(entry.properties).trimEnd()}\n---\n\n${body}\n`;
 		const dir = group ? join(folder, `${entry.day.slice(0, 4)}/${entry.day.slice(5, 7)}`) : folder;
 		const name = merge ? entry.day : safeName(pattern.replace(/\{(date|time|id)\}/g, (_, token: string) => token === 'date' ? entry.day : token === 'time' ? entry.time : entry.id));
-		const base = join(dir, `${name}.md`);
-		const path = merge ? base : freePath(base, taken);
+		const base = vaultCase(join(dir, `${name}.md`), known);
+		const path = merge ? known.get(base.toLowerCase()) ?? base : freePath(base, taken);
 		// A daily section preserves entry properties without changing existing daily frontmatter.
 		const section = `\n\n## ${entry.time.slice(0, 2)}:${entry.time.slice(2)} Journey entry\n\n\`\`\`yaml\n${stringifyYaml(entry.properties).trimEnd()}\n\`\`\`\n\n${body}\n`;
 		notes.push({ path, content, section, merge });

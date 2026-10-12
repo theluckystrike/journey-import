@@ -36,7 +36,7 @@ Each separate note has frontmatter for the date, timezone and Journey ID. Tags a
 
 ### Daily note merge (Pro)
 
-Set the note folder to your daily note folder and turn on “Merge by date”. Entries append to `YYYY-MM-DD.md`. A missing daily file is created. Existing daily frontmatter stays in place. Each entry gets a time heading and a YAML code block with its own properties. This keeps separate locations and moods visible when two entries share a date.
+Set the note folder to your daily note folder and turn on “Merge by date”. Entries append to `YYYY-MM-DD.md`. A daily note or folder with a different letter case counts as the same path. A missing daily file is created. Existing daily frontmatter stays in place. Each entry gets a time heading and a YAML code block with its own properties. This keeps separate locations and moods visible when two entries share a date.
 
 <img src="https://raw.githubusercontent.com/theluckystrike/journey-import/HEAD/docs/daily-merge.png" alt="A Journey entry appended beneath existing daily note text" width="720">
 

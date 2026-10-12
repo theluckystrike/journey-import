@@ -119,6 +119,37 @@ describe('ZIP limits and Sponsors terms', () => {
 		const plan = planImport(readArchive({ 'a.json': strToU8(JSON.stringify(entry)), [name]: new Uint8Array(3) }), DEFAULT_OPTIONS, [], false);
 		expect(plan.attachments[0]!.path).toMatch(/x\.jpg$/);
 	});
+	it('keeps escaped tag text as text and not as a raw HTML tag', () => {
+		const html = '<p>a &lt;img src=https://example.invalid/x&gt; b, 1 &lt; 2 <code>&lt;b&gt;</code></p>';
+		expect(convertBody(html, 'html')).toBe('a &lt;img src=https://example.invalid/x> b, 1 < 2 `<b>`');
+	});
+	it('plans a large photo backup in bounded time', () => {
+		const files: Record<string, Uint8Array> = {};
+		for (let i = 0; i < 4000; i++) {
+			files[`photos/p${i}.jpg`] = new Uint8Array(1);
+			files[`e${i}.json`] = strToU8(JSON.stringify({ id: `e${i}`, date_journal: 1625133600000 + i * 60000, timezone: 'UTC', text: 'x', photos: [`p${i}.jpg`] }));
+		}
+		const archive = readArchive(files);
+		const start = performance.now();
+		const plan = planImport(archive, DEFAULT_OPTIONS, [], false);
+		expect(plan.attachments).toHaveLength(4000);
+		expect(performance.now() - start).toBeLessThan(3000);
+	}, 60000);
+	it('uses the vault case of an existing folder and daily note', () => {
+		const archive = readArchive({ 'a.json': strToU8(JSON.stringify({ id: 'a', date_journal: 1625133600000, timezone: 'UTC', text: 'x', photos: ['p.jpg'] })), 'p.jpg': new Uint8Array(1) });
+		const merged = planImport(archive, { ...DEFAULT_OPTIONS, folder: 'Daily', attachments: 'Daily/Files', merge: true }, ['daily', 'daily/2021-07-01.md', 'daily/files'], true);
+		expect(merged.notes[0]!.path).toBe('daily/2021-07-01.md');
+		expect(merged.attachments[0]!.path).toBe('daily/files/p.jpg');
+		const free = planImport(archive, DEFAULT_OPTIONS, ['journey', 'journey/2021-07-01 1000.md'], false);
+		expect(free.notes[0]!.path).toBe('journey/2021-07-01 1000 (2).md');
+	});
+	it('appends to a daily note whose folder differs in case', async () => {
+		pro(true);
+		const { app, plugin } = setup({ 'daily/2021-07-01.md': '# Day\n' });
+		await plugin.importArchive(fixture(), { ...DEFAULT_OPTIONS, folder: 'Daily', merge: true });
+		expect(await app.vault.read(app.vault.getAbstractFileByPath('daily/2021-07-01.md') as TFile)).toContain('## 12:00 Journey entry');
+		expect(app.vault.getAbstractFileByPath('Daily/2021-07-01.md')).toBeNull();
+	});
 	it('rejects invalid ZIP bytes', () => { expect(() => readZip(strToU8('not zip'))).toThrow(); });
 	it('rejects archive traversal', () => { expect(() => readZip(zipSync({ '../a.json': strToU8('{}') }))).toThrow('Unsafe ZIP path'); });
 	it('rejects oversized expanded JSON before parsing', () => { expect(() => readZip(zipSync({ 'a.json': new Uint8Array(4 * 1024 * 1024 + 1) }))).toThrow('Entry JSON exceeds 4 MiB'); });
