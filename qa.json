@@ -1,0 +1,57 @@
+[
+  {
+    "feature": "preview",
+    "caption": "Preview two Journey entries and one photo.",
+    "note": "Welcome.md",
+    "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.signOut();p.settings={folder:'Journey Diary Import/Imported',attachments:'Journey Diary Import/Imported/attachments',merge:false,group:false,pattern:'{date} {time}'};const old=app.vault.getAbstractFileByPath('Journey Diary Import/Imported');if(old)await app.vault.delete(old,true);p.openImport(bytes,'journey-fixture.zip');return 'ok';})()",
+    "after": "for(const m of app.plugins.plugins['journey-import'].modals)m.close();"
+  },
+  {
+    "feature": "dated-notes",
+    "caption": "The imported date note has bold and italic text.",
+    "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.signOut();const old=app.vault.getAbstractFileByPath('Journey Diary Import/Imported');if(old)await app.vault.delete(old,true);await p.importArchive(p.parseZip(bytes),{folder:'Journey Diary Import/Imported',attachments:'Journey Diary Import/Imported/attachments',merge:false,group:false,pattern:'{date} {time}'});await app.workspace.openLinkText('Journey Diary Import/Imported/2021-07-01 1200.md','',false);await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/Imported/2021-07-01 1200.md',mode:'preview'}});return 'ok';})()",
+    "wait": 5500
+  },
+  {
+    "feature": "photos",
+    "caption": "The imported photo is a local vault attachment.",
+    "eval": "(async()=>{await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/Imported/2021-07-01 1200.md',mode:'preview'}});await new Promise(r=>setTimeout(r,700));const img=app.workspace.getMostRecentLeaf().view.containerEl.querySelector('img');if(!img)throw new Error('No imported photo rendered');img.scrollIntoView({block:'center'});return 'ok';})()"
+  },
+  {
+    "feature": "properties",
+    "caption": "The entry has date, location, address, mood and weather properties.",
+    "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();await app.workspace.openLinkText('Journey Diary Import/Imported/2021-06-27 1609.md','',false);await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/Imported/2021-06-27 1609.md',mode:'preview'}});return 'ok';})()"
+  },
+  {
+    "feature": "daily-merge",
+    "caption": "Pro appends an entry to a daily note.",
+    "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.opts.http=async()=>({status:200,json:{data:{viewer:{login:'demo-reader'},user:{sponsorshipForViewerAsSponsor:{isActive:true,isOneTimePayment:false,tier:{name:'$5 a month',monthlyPriceInCents:500}}}}}});app.secretStorage.setSecret('journey-import-github-token','gho_'+'0'.repeat(36));await p.pro.refreshNow();const daily=app.vault.getFileByPath('Journey Diary Import/2021-07-01.md');await app.vault.modify(daily,'---\\ntags: [daily]\\n---\\n\\n# Thursday diary\\n\\n## My morning\\n\\nI wrote this note before the Journey import.\\n');await p.importArchive(p.parseZip(bytes),{folder:'Journey Diary Import',attachments:'Journey Diary Import/Imported/attachments',merge:true,group:false,pattern:'{date}'});await app.workspace.openLinkText('Journey Diary Import/2021-07-01.md','',false);await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/2021-07-01.md',mode:'preview'}});return 'ok';})()",
+    "after": "app.plugins.plugins['journey-import'].pro.signOut();'ok'",
+    "wait": 5500
+  },
+  {
+    "feature": "folders",
+    "caption": "Pro shows a year and month path and a custom file name.",
+    "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.opts.http=async()=>({status:200,json:{data:{viewer:{login:'demo-reader'},user:{sponsorshipForViewerAsSponsor:{isActive:true,isOneTimePayment:false,tier:{name:'$5 a month',monthlyPriceInCents:500}}}}}});app.secretStorage.setSecret('journey-import-github-token','gho_'+'0'.repeat(36));await p.pro.refreshNow();p.settings={folder:'Journey Diary Import/Diary',attachments:'Journey Diary Import/Diary/attachments',merge:false,group:true,pattern:'Diary {date} {time}'};p.openImport(bytes,'journey-fixture.zip');return 'ok';})()",
+    "after": "for(const m of app.plugins.plugins['journey-import'].modals)m.close();app.plugins.plugins['journey-import'].pro.signOut();'ok'"
+  },
+  {
+    "feature": "journey-import",
+    "caption": "Preview a backup and review the imported entry and local photo.",
+    "frames": [
+      {
+        "note": "Welcome.md",
+        "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.signOut();p.settings={folder:'Journey Diary Import/Imported',attachments:'Journey Diary Import/Imported/attachments',merge:false,group:false,pattern:'{date} {time}'};const old=app.vault.getAbstractFileByPath('Journey Diary Import/Imported');if(old)await app.vault.delete(old,true);p.openImport(bytes,'journey-fixture.zip');return 'ok';})()",
+        "hold": 1400
+      },
+      {
+        "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();const p=app.plugins.plugins['journey-import'];const f=app.vault.getFileByPath('Journey Diary Import/journey-fixture.zip');const bytes=new Uint8Array(await app.vault.readBinary(f));p.pro.signOut();const old=app.vault.getAbstractFileByPath('Journey Diary Import/Imported');if(old)await app.vault.delete(old,true);await p.importArchive(p.parseZip(bytes),{folder:'Journey Diary Import/Imported',attachments:'Journey Diary Import/Imported/attachments',merge:false,group:false,pattern:'{date} {time}'});await app.workspace.openLinkText('Journey Diary Import/Imported/2021-07-01 1200.md','',false);await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/Imported/2021-07-01 1200.md',mode:'preview'}});return 'ok';})()",
+        "hold": 1400
+      },
+      {
+        "eval": "(async()=>{for(const m of app.plugins.plugins['journey-import'].modals)m.close();await app.workspace.openLinkText('Journey Diary Import/Imported/2021-06-27 1609.md','',false);await app.workspace.getMostRecentLeaf().setViewState({type:'markdown',state:{file:'Journey Diary Import/Imported/2021-06-27 1609.md',mode:'preview'}});return 'ok';})()",
+        "hold": 1400
+      }
+    ]
+  }
+]

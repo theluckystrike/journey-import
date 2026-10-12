@@ -1,0 +1,938 @@
+{
+ "slug": "journey-import",
+ "module": "products/journey-import/src/importer.ts",
+ "function": "planImport",
+ "cases": [
+  {
+   "name": "Public Journey fixture has two notes and one photo",
+   "args": [
+    "journey-fixture.zip",
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-06-27 1609.md",
+     "Journey/2021-07-01 1200.md"
+    ],
+    "attachmentCount": 1
+   }
+  },
+  {
+   "name": "Vienna entry has a dated name and summer offset",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200.md"
+    ],
+    "properties": [
+     {
+      "date": "2021-07-01T12:00:00+02:00",
+      "timezone": "Europe/Vienna"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Bold and italic HTML become Markdown",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p><strong>bold </strong><em>italic </em></p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "bodies": [
+     "**bold** *italic*"
+    ]
+   }
+  },
+  {
+   "name": "Photo is copied and embedded",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo-5bkOJACgIzl36wsU.jpg"
+      ]
+     },
+     "photo-5bkOJACgIzl36wsU.jpg": "photo"
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "attachments": [
+     "Journey/attachments/photo-5bkOJACgIzl36wsU.jpg"
+    ],
+    "bodyIncludes": [
+     "![[Journey/attachments/photo-5bkOJACgIzl36wsU.jpg]]"
+    ]
+   }
+  },
+  {
+   "name": "Valid location keeps coordinates and address",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [],
+      "lat": 51.502,
+      "lon": -0.14,
+      "address": "1 Constitution Hill"
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "location": [
+       51.502,
+       -0.14
+      ],
+      "address": "1 Constitution Hill"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Journey sentinel location is omitted",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [],
+      "lat": 1.7976931348623157e+308,
+      "lon": 1.7976931348623157e+308,
+      "address": "unknown"
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "absentProperties": [
+     "location",
+     "address"
+    ]
+   }
+  },
+  {
+   "name": "Weather description and temperature are kept",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [],
+      "weather": {
+       "degree_c": 27.2,
+       "description": "Scattered Clouds"
+      }
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "weather": "Scattered Clouds, 27.2 °C"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Same minute entries get numbered suffixes",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     },
+     "b.json": {
+      "id": "entry-b",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200.md",
+     "Journey/2021-07-01 1200 (2).md"
+    ]
+   }
+  },
+  {
+   "name": "ZIP without Journey entries has no output",
+   "args": [
+    {
+     "readme.txt": "text",
+     "settings.json": {
+      "key": "value"
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [],
+    "attachmentCount": 0
+   }
+  },
+  {
+   "name": "Existing note receives a collision suffix",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [
+     "Journey/2021-07-01 1200.md"
+    ],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200 (2).md"
+    ]
+   }
+  },
+  {
+   "name": "Case variants receive a collision suffix",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [
+     "journey/2021-07-01 1200.MD"
+    ],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200 (2).md"
+    ]
+   }
+  },
+  {
+   "name": "Nested archive photo path resolves by basename",
+   "args": [
+    {
+     "backup/a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo.jpg"
+      ]
+     },
+     "backup/photos/photo.jpg": "bytes"
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "attachments": [
+     "Journey/attachments/photo.jpg"
+    ]
+   }
+  },
+  {
+   "name": "Missing photo is reported",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "missing.jpg"
+      ]
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "attachmentCount": 0,
+    "warnings": [
+     "entry-a: missing or ambiguous photo missing.jpg."
+    ]
+   }
+  },
+  {
+   "name": "Ambiguous photo is reported",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo.jpg"
+      ]
+     },
+     "one/photo.jpg": "a",
+     "two/photo.jpg": "b"
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "attachmentCount": 0,
+    "warnings": [
+     "entry-a: missing or ambiguous photo photo.jpg."
+    ]
+   }
+  },
+  {
+   "name": "Shared photo is copied once",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo.jpg"
+      ]
+     },
+     "b.json": {
+      "id": "entry-b",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo.jpg"
+      ]
+     },
+     "photo.jpg": "a"
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "attachmentCount": 1
+   }
+  },
+  {
+   "name": "Existing photo receives a suffix",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [
+       "photo.jpg"
+      ]
+     },
+     "photo.jpg": "a"
+    },
+    {},
+    [
+     "Journey/attachments/photo.jpg"
+    ],
+    false
+   ],
+   "expected": {
+    "attachments": [
+     "Journey/attachments/photo (2).jpg"
+    ]
+   }
+  },
+  {
+   "name": "Markdown source keeps formatting",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "## Walk\n\n**Sunshine**",
+      "type": "markdown",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "bodies": [
+     "## Walk\n\n**Sunshine**"
+    ]
+   }
+  },
+  {
+   "name": "HTML script and remote image are removed",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>Walk</p><script>bad()</script><img src=\"https://example.invalid/a.jpg\">",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "bodies": [
+     "Walk"
+    ]
+   }
+  },
+  {
+   "name": "Markdown image is removed",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "Walk\n\n![remote](https://example.invalid/a.jpg)",
+      "type": "markdown",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "bodies": [
+     "Walk"
+    ]
+   }
+  },
+  {
+   "name": "Unknown timezone falls back to UTC with a warning",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Unknown/Zone",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "date": "2021-07-01T10:00:00+00:00",
+      "timezone": "UTC"
+     }
+    ],
+    "warnings": [
+     "a.json: unknown timezone; used UTC."
+    ]
+   }
+  },
+  {
+   "name": "Missing timezone uses UTC",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": null,
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "date": "2021-07-01T10:00:00+00:00",
+      "timezone": "UTC"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Winter Vienna date uses standard time",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1609502400000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "date": "2021-01-01T13:00:00+01:00"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Local date can differ from UTC date",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1609457400000,
+      "timezone": "Asia/Tokyo",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-01-01 0830.md"
+    ]
+   }
+  },
+  {
+   "name": "Tags and mood retain values including zero",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [],
+      "tags": [
+       "#travel",
+       "café",
+       "",
+       3
+      ],
+      "mood": 0
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "tags": [
+       "travel",
+       "café"
+      ],
+      "mood": 0
+     }
+    ]
+   }
+  },
+  {
+   "name": "Sentinel weather temperature is omitted",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": [],
+      "weather": {
+       "description": "Clouds",
+       "degree_c": 1.7976931348623157e+308
+      }
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "properties": [
+     {
+      "weather": "Clouds"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Malformed JSON does not stop a valid entry",
+   "args": [
+    {
+     "a.json": "{broken",
+     "b.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200.md"
+    ],
+    "warnings": [
+     "Skipped a.json: invalid JSON or entry text."
+    ]
+   }
+  },
+  {
+   "name": "Invalid date skips entry",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1e+30,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {},
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [],
+    "warnings": [
+     "Skipped a.json: invalid date."
+    ]
+   }
+  },
+  {
+   "name": "Unsafe destination is rejected",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "folder": "../outside"
+    },
+    [],
+    false
+   ],
+   "expected": {
+    "error": "Use a vault folder without dot segments."
+   }
+  },
+  {
+   "name": "Config folder destination is rejected",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "attachments": ".obsidian"
+    },
+    [],
+    false
+   ],
+   "expected": {
+    "error": "Use a vault folder without dot segments."
+   }
+  },
+  {
+   "name": "Free import ignores saved Pro options",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "merge": true,
+     "group": true,
+     "pattern": "Private {id}"
+    },
+    [],
+    false
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021-07-01 1200.md"
+    ],
+    "merge": [
+     false
+    ]
+   }
+  },
+  {
+   "name": "Pro groups notes by year and month",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "group": true
+    },
+    [],
+    true
+   ],
+   "expected": {
+    "paths": [
+     "Journey/2021/07/2021-07-01 1200.md"
+    ]
+   }
+  },
+  {
+   "name": "Pro file pattern uses date time and id",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "pattern": "Day {date} {id} {time}"
+    },
+    [],
+    true
+   ],
+   "expected": {
+    "paths": [
+     "Journey/Day 2021-07-01 entry-a 1200.md"
+    ]
+   }
+  },
+  {
+   "name": "Pro daily note merge selects date path",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     },
+     "b.json": {
+      "id": "entry-b",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "folder": "Daily",
+     "merge": true
+    },
+    [
+     "Daily/2021-07-01.md"
+    ],
+    true
+   ],
+   "expected": {
+    "paths": [
+     "Daily/2021-07-01.md",
+     "Daily/2021-07-01.md"
+    ],
+    "merge": [
+     true,
+     true
+    ]
+   }
+  },
+  {
+   "name": "Unsupported pattern token is rejected",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "pattern": "{title}"
+    },
+    [],
+    true
+   ],
+   "expected": {
+    "error": "Use {date}, {time} and {id} in the file name pattern."
+   }
+  },
+  {
+   "name": "Custom file pattern cannot create a path",
+   "args": [
+    {
+     "a.json": {
+      "id": "entry-a",
+      "date_journal": 1625133600000,
+      "timezone": "Europe/Vienna",
+      "text": "<p>First entry</p>",
+      "type": "html",
+      "photos": []
+     }
+    },
+    {
+     "pattern": "nested/{date}"
+    },
+    [],
+    true
+   ],
+   "expected": {
+    "paths": [
+     "Journey/nested 2021-07-01.md"
+    ]
+   }
+  }
+ ],
+ "note": "Args are archive files, option overrides, existing paths and Pro state. A fixture file name loads the public ZIP. Expected fields select paths, metadata, bodies, attachment count, warnings or an error from the normalized import plan."
+}

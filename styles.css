@@ -1,0 +1,19 @@
+.journey-import-modal {
+	width: min(720px, 95vw);
+}
+
+.journey-import-modal .journey-preview {
+	max-height: 230px;
+	overflow: auto;
+	padding: var(--size-4-2) var(--size-4-4);
+	background: var(--background-secondary);
+	border-radius: var(--radius-m);
+}
+
+.journey-import-modal .journey-counts {
+	font-weight: var(--font-semibold);
+}
+
+.journey-import-modal .journey-warning {
+	color: var(--text-warning);
+}
