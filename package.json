@@ -1,6 +1,6 @@
 {
 	"name": "journey-import",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"private": true,
 	"description": "Convert Journey diary ZIP backups into dated Markdown notes with photos.",
 	"main": "main.js",
@@ -22,7 +22,7 @@
 		"npm": ">=11"
 	},
 	"dependencies": {
-		"fflate": "0.8.2"
+		"fflate": "0.8.3"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.39.5",
