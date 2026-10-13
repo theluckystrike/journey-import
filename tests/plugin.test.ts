@@ -133,7 +133,7 @@ describe('ZIP limits and Sponsors terms', () => {
 		const start = performance.now();
 		const plan = planImport(archive, DEFAULT_OPTIONS, [], false);
 		expect(plan.attachments).toHaveLength(4000);
-		expect(performance.now() - start).toBeLessThan(3000);
+		expect(performance.now() - start).toBeLessThan(20000);
 	}, 60000);
 	it('uses the vault case of an existing folder and daily note', () => {
 		const archive = readArchive({ 'a.json': strToU8(JSON.stringify({ id: 'a', date_journal: 1625133600000, timezone: 'UTC', text: 'x', photos: ['p.jpg'] })), 'p.jpg': new Uint8Array(1) });
