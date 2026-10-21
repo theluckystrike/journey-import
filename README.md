@@ -48,7 +48,7 @@ Set the note folder to your daily note folder and turn on “Merge by date”. E
 
 ## Install
 
-This source tree is prepared for release. For manual installation, copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/journey-import/`. Enable Journey Diary Import in Community plugins. It needs Obsidian 1.13.4 or later. A community directory listing is not part of this build.
+Open Settings, then Community plugins, then Browse. Search for "Journey Diary Import", then select Install and Enable. For manual installation, copy `main.js`, `manifest.json` and `styles.css` into `<vault>/.obsidian/plugins/journey-import/`. Enable Journey Diary Import in Community plugins. It needs Obsidian 1.13.4 or later.
 
 ## Usage
 
@@ -61,6 +61,8 @@ This source tree is prepared for release. For manual installation, copy `main.js
 Use a separate folder for a first import. A second free import creates more notes and photos with numbered names. A second daily merge appends entries again. The plugin does not deduplicate earlier imports or track a completed backup. Compare the output with Journey before you remove the source data.
 
 ## Settings
+
+After a minor or major update, this plugin opens one What's new tab in the background. The tab and settings card suggest other NoteMods plugins and Zovo Chat and link to notemods.com for feedback ([privacy](https://notemods.com/privacy/)). The tab sends no data. Turn the tab off in Settings.
 
 The settings tab stores default note folder, attachments folder and Pro layout options. The import window starts with those defaults. Changes in that window apply to the current import. The default folders are `Journey` and `Journey/attachments`.
 

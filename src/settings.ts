@@ -4,6 +4,7 @@ import { sponsorsSettingItems } from './license/github-obsidian';
 import { DEFAULT_OPTIONS, type ImportOptions } from './importer';
 import { PRO_UI } from './pro';
 import type JourneyImportPlugin from './main';
+import { helloSettingItems } from './hello/settings';
 
 export type JourneyImportSettings = ImportOptions;
 export const DEFAULT_SETTINGS = DEFAULT_OPTIONS;
@@ -20,6 +21,11 @@ export function normalizeSettings(saved: Partial<JourneyImportSettings> | null |
 export class JourneyImportSettingTab extends PluginSettingTab {
 	declare plugin: JourneyImportPlugin;
 	getSettingDefinitions(): SettingDefinitionItem[] {
+		// The product rows, then the "More from NoteMods" card (packages/hello).
+		return [...this.productSettingDefinitions(), ...helloSettingItems()];
+	}
+
+	productSettingDefinitions(): SettingDefinitionItem[] {
 		return [
 			{ name: 'Note folder', desc: 'Vault folder for imported notes.', control: { type: 'text', key: 'folder', defaultValue: DEFAULT_SETTINGS.folder } },
 			{ name: 'Attachments folder', desc: 'Vault folder for copied photos.', control: { type: 'text', key: 'attachments', defaultValue: DEFAULT_SETTINGS.attachments } },
