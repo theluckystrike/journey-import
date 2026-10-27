@@ -1,5 +1,11 @@
 # journey-import
 
+## 1.1.1
+
+### Patch Changes
+
+- eecb5bb: Merge by date, Year and month folders and File name pattern in the import window now stay enabled for a free user. A change shows the Pro notice with a Sponsor on GitHub button and does not change the import.
+
 ## 1.1.0
 
 ### Minor Changes

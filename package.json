@@ -1,7 +1,6 @@
 {
 	"name": "journey-import",
-	"repository": {"type": "git", "url": "theluckystrike/journey-import.git"},
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"private": true,
 	"description": "Convert Journey diary ZIP backups into dated Markdown notes with photos.",
 	"main": "main.js",

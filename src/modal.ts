@@ -1,8 +1,8 @@
 import { IMPORT_TEXT } from './copy';
 import { Modal, Notice, Setting } from 'obsidian';
 import type JourneyImportPlugin from './main';
-import type { Archive, ImportOptions } from './importer';
-import { isPro, onProChange } from './pro';
+import { DEFAULT_OPTIONS, type Archive, type ImportOptions } from './importer';
+import { PRO_GROUP, PRO_MERGE, PRO_PATTERN, isPro, onProChange, proNotice } from './pro';
 
 export class JourneyImportModal extends Modal {
 	private archive: Archive | null = null;
@@ -11,6 +11,8 @@ export class JourneyImportModal extends Modal {
 	private stop: (() => void) | null = null;
 	private writing = false;
 	private message = '';
+	/** True after a free user typed in the pattern field and saw the Pro notice, so the notice shows once for each window. */
+	private patternNoticeShown = false;
 	constructor(private plugin: JourneyImportPlugin, bytes?: Uint8Array, name = '') {
 		super(plugin.app);
 		this.options = { ...plugin.settings };
@@ -44,9 +46,23 @@ export class JourneyImportModal extends Modal {
 		});
 		new Setting(el).setName('Note folder').addText((c) => c.setValue(this.options.folder).onChange((v) => { this.options.folder = v; this.updatePreview(); }));
 		new Setting(el).setName('Attachments folder').addText((c) => c.setValue(this.options.attachments).onChange((v) => { this.options.attachments = v; this.updatePreview(); }));
-		new Setting(el).setName(IMPORT_TEXT.merge).addToggle((c) => c.setValue(isPro() && this.options.merge).setDisabled(!isPro()).onChange((v) => { this.options.merge = v; this.updatePreview(); }));
-		new Setting(el).setName(IMPORT_TEXT.group).addToggle((c) => c.setValue(isPro() && this.options.group).setDisabled(!isPro()).onChange((v) => { this.options.group = v; this.updatePreview(); }));
-		new Setting(el).setName(IMPORT_TEXT.pattern).addText((c) => c.setValue(isPro() ? this.options.pattern : '{date} {time}').setDisabled(!isPro()).onChange((v) => { this.options.pattern = v; this.updatePreview(); }));
+		// The Pro options stay enabled for a free user: a change shows what Pro adds and how to get it, and puts the control back.
+		new Setting(el).setName(IMPORT_TEXT.merge).addToggle((c) => c.setValue(isPro() && this.options.merge).onChange((v) => {
+			if (!isPro()) { if (v) { proNotice(PRO_MERGE); c.setValue(false); } return; }
+			this.options.merge = v; this.updatePreview();
+		}));
+		new Setting(el).setName(IMPORT_TEXT.group).addToggle((c) => c.setValue(isPro() && this.options.group).onChange((v) => {
+			if (!isPro()) { if (v) { proNotice(PRO_GROUP); c.setValue(false); } return; }
+			this.options.group = v; this.updatePreview();
+		}));
+		new Setting(el).setName(IMPORT_TEXT.pattern).addText((c) => c.setValue(isPro() ? this.options.pattern : DEFAULT_OPTIONS.pattern).onChange((v) => {
+			if (!isPro()) {
+				if (v !== DEFAULT_OPTIONS.pattern && !this.patternNoticeShown) { this.patternNoticeShown = true; proNotice(PRO_PATTERN); }
+				c.setValue(DEFAULT_OPTIONS.pattern);
+				return;
+			}
+			this.options.pattern = v; this.updatePreview();
+		}));
 		el.createDiv({ cls: 'journey-preview', attr: { 'aria-live': 'polite' } });
 		new Setting(el).addButton((b) => b.setButtonText('Import entries').setCta().setDisabled(this.writing || !this.archive?.entries.length).onClick(async () => {
 			if (!this.archive || this.writing) return;

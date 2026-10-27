@@ -1,6 +1,7 @@
 // Pro through GitHub Sponsors (packages/license, github.ts). product.yaml pro: holds the same values; fx check compares them.
 // Every Pro check in the plugin calls isPro(); views redraw through onProChange(). main.ts binds the manager in onload.
 import type { SponsorsConfig, SponsorsManager } from './license/index';
+import { showProNotice } from './license/github-obsidian';
 
 export const SPONSORS: SponsorsConfig = {
 	// Public client id of the seller's OAuth App (device flow on, no client secret anywhere).
@@ -18,6 +19,11 @@ export const PRO_UI = {
 	proSummary: 'Pro adds daily note merge, year and month folders, and a custom file name pattern.',
 	priceText: 'Sponsor $5 a month, or $15 once. When you have paid $15 in total, Pro stays on.',
 };
+
+/** First sentences of the Pro gates in the import window. proNotice adds the next step for this user. */
+export const PRO_MERGE = 'Merge by date needs Pro.';
+export const PRO_GROUP = 'Year and month folders need Pro.';
+export const PRO_PATTERN = 'A custom file name pattern needs Pro.';
 
 type Listener = () => void;
 
@@ -53,4 +59,9 @@ export function resetPro(): void {
 	unbind = null;
 	manager = null;
 	listeners.clear();
+}
+
+/** Shows the shared Pro notice: the lead, then the next step for this user. A free user gets a Sponsor on GitHub button. */
+export function proNotice(lead: string): void {
+	showProNotice(manager, lead);
 }
