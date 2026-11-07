@@ -9,7 +9,7 @@ const PATTERN = 'File name pattern (Pro)';
 const MERGE_LEAD = 'Merge by date needs Pro.';
 const GROUP_LEAD = 'Year and month folders need Pro.';
 const PATTERN_LEAD = 'A custom file name pattern needs Pro.';
-const PITCH = 'Sponsor on GitHub, then sign in from the plugin settings.';
+const PITCH = 'One payment turns on Pro in every NoteMods plugin. Sponsor on GitHub, then sign in from the plugin settings.';
 
 interface ModalState { options: { merge: boolean; group: boolean; pattern: string }; preview: string[]; toggles: Record<string, boolean>; pattern: string }
 

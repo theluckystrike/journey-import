@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS, normalizeSettings } from '../src/settings';
 import { bindPro, isPro, resetPro, SPONSORS } from '../src/pro';
 import { readZip, readArchive, planImport, DEFAULT_OPTIONS, textHtml, convertBody } from '../src/importer';
 import manifest from '../manifest.json';
+import { GROWTH_LIMIT, growth } from './growth';
 
 afterEach(() => resetPro());
 const fixture = () => readZip(new Uint8Array(readFileSync('tests/fixtures/journey-fixture.zip')));
@@ -124,16 +125,22 @@ describe('ZIP limits and Sponsors terms', () => {
 		expect(convertBody(html, 'html')).toBe('a &lt;img src=https://example.invalid/x> b, 1 < 2 `<b>`');
 	});
 	it('plans a large photo backup in bounded time', () => {
-		const files: Record<string, Uint8Array> = {};
-		for (let i = 0; i < 4000; i++) {
-			files[`photos/p${i}.jpg`] = new Uint8Array(1);
-			files[`e${i}.json`] = strToU8(JSON.stringify({ id: `e${i}`, date_journal: 1625133600000 + i * 60000, timezone: 'UTC', text: 'x', photos: [`p${i}.jpg`] }));
-		}
-		const archive = readArchive(files);
-		const start = performance.now();
-		const plan = planImport(archive, DEFAULT_OPTIONS, [], false);
+		const archiveOf = (n: number) => {
+			const files: Record<string, Uint8Array> = {};
+			for (let i = 0; i < n; i++) {
+				files[`photos/p${i}.jpg`] = new Uint8Array(1);
+				files[`e${i}.json`] = strToU8(JSON.stringify({ id: `e${i}`, date_journal: 1625133600000 + i * 60000, timezone: 'UTC', text: 'x', photos: [`p${i}.jpg`] }));
+			}
+			return readArchive(files);
+		};
+		const plan = planImport(archiveOf(4000), DEFAULT_OPTIONS, [], false);
 		expect(plan.attachments).toHaveLength(4000);
-		expect(performance.now() - start).toBeLessThan(20000);
+		// Growth guard: 4,000 entries against 400 entries, both timed in this test (tests/growth.ts).
+		const g = growth((n) => {
+			const archive = archiveOf(n);
+			return () => planImport(archive, DEFAULT_OPTIONS, [], false);
+		}, 4000);
+		expect(g.ratio, g.text).toBeLessThan(GROWTH_LIMIT);
 	}, 60000);
 	it('uses the vault case of an existing folder and daily note', () => {
 		const archive = readArchive({ 'a.json': strToU8(JSON.stringify({ id: 'a', date_journal: 1625133600000, timezone: 'UTC', text: 'x', photos: ['p.jpg'] })), 'p.jpg': new Uint8Array(1) });
