@@ -8,6 +8,7 @@ import { bindPro, isPro, resetPro, SPONSORS } from '../src/pro';
 import { readZip, readArchive, planImport, DEFAULT_OPTIONS, textHtml, convertBody } from '../src/importer';
 import manifest from '../manifest.json';
 import { GROWTH_LIMIT, growth } from './growth';
+import { budget } from './time-scale';
 
 afterEach(() => resetPro());
 const fixture = () => readZip(new Uint8Array(readFileSync('tests/fixtures/journey-fixture.zip')));
@@ -141,7 +142,7 @@ describe('ZIP limits and Sponsors terms', () => {
 			return () => planImport(archive, DEFAULT_OPTIONS, [], false);
 		}, 4000);
 		expect(g.ratio, g.text).toBeLessThan(GROWTH_LIMIT);
-	}, 60000);
+	}, budget(60000));
 	it('uses the vault case of an existing folder and daily note', () => {
 		const archive = readArchive({ 'a.json': strToU8(JSON.stringify({ id: 'a', date_journal: 1625133600000, timezone: 'UTC', text: 'x', photos: ['p.jpg'] })), 'p.jpg': new Uint8Array(1) });
 		const merged = planImport(archive, { ...DEFAULT_OPTIONS, folder: 'Daily', attachments: 'Daily/Files', merge: true }, ['daily', 'daily/2021-07-01.md', 'daily/files'], true);
